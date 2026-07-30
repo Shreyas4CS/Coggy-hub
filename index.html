@@ -1368,19 +1368,19 @@ window.doUpload = async () => {
         address: 0x0
       }];
 
-      await esploader.write_flash({
-        fileArray: flashData,
-        flashSize: 'keep',
-        flashMode: 'keep',
-        flashFreq: 'keep',
-        eraseAll: false,
-        compress: true,
-        reportProgress: (idx, written, total) => {
-          const pct = 45 + Math.round((written / total) * 45);
-          updateProgress(pct);
-          document.getElementById('progressFill').style.width = pct + '%';
-        }
-      });
+      await esploader.writeFlash({
+      fileArray: flashData,
+      flashSize: 'keep',
+      flashMode: 'keep',
+      flashFreq: 'keep',
+      eraseAll: false,
+      compress: true,
+      reportProgress: (idx, written, total) => {
+        const pct = 45 + Math.round((written / total) * 45);
+        updateProgress(pct);
+        document.getElementById('progressFill').style.width = pct + '%';
+  }
+});
 
       updateStep(3, 'done'); updateStep(4, 'done'); updateProgress(92);
 
