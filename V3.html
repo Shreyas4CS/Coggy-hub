@@ -1387,14 +1387,7 @@ window.doUpload = async () => {
 
       updateStep(5, 'active');
       addLog('info', '  Verifying…');
-      try {
-        // After a successful write the ESP32 reboots and sends boot messages
-        // over serial. esptool-js may misread them as a bad packet — this is
-        // harmless noise, not a real failure, so we swallow it here.
-        await esploader.after();
-      } catch (rebootErr) {
-        addLog('info', `  (Post-flash reboot noise ignored: ${rebootErr.message})`);
-      }
+      await new Promise(r => setTimeout(r, 600));
       updateStep(5, 'done'); updateProgress(100);
 
       addLog('ok', '✓ Flash successful! ESP32 is rebooting…');
