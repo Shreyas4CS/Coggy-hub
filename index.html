@@ -1237,9 +1237,12 @@ window.connectESP = async () => {
       // Real esptool-js connection
       const { Transport, ESPLoader } = await import('./esptool-bundle.js');
       transport = new Transport(port, true);
-      const logFn = { log:(msg)=>addLog('info',msg), debug:()=>{}, error:(msg)=>addLog('err',msg) };
-      esploader = new ESPLoader({ transport, baudrate: baud, romBaudrate: 115200, terminal: logFn });
-      await esploader.main();
+      const logFn = {
+      clean() { document.getElementById('logBody').innerHTML = ''; },
+      writeLine(data) { addLog('info', data); },
+      write(data) { addLog('info', data); }
+    };
+esploader = new ESPLoader({ transport, baudrate: baud, romBaudrate: 115200, terminal: logFn });
       const chip = await esploader.get_chip_description();
       setConnected(`${chip} · ${baud} baud`);
       toast('success','ESP32 Connected!',`Detected: ${chip} at ${baud} baud`);
