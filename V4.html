@@ -1369,38 +1369,32 @@ window.doUpload = async () => {
         address: 0x0
       }];
 
-      // Track whether the write fully completed before any error fires.
-      // esptool-js sometimes throws "Invalid head of packet (0xff)" AFTER
-      // reaching 100% — that's the ESP32 rebooting and sending boot messages
-      // over serial, not a real write failure. We swallow it if writeComplete.
-      let writeComplete = false;
-      try {
-        await esploader.writeFlash({
-          fileArray: flashData,
-          flashSize: 'keep',
-          flashMode: 'keep',
-          flashFreq: 'keep',
-          eraseAll: true,
-          compress: true,
-          reportProgress: (idx, written, total) => {
-            if (written >= total) writeComplete = true;
-            const pct = 45 + Math.round((written / total) * 45);
-            updateProgress(pct);
-            document.getElementById('progressFill').style.width = pct + '%';
-          }
-        });
-        writeComplete = true; // also set here in case callback fires late
-      } catch (flashErr) {
-        if (!writeComplete) throw flashErr; // real error — propagate
-        // else: post-reboot serial noise — log and continue
-        addLog('info', `  (Post-flash reboot noise ignored: ${flashErr.message})`);
-      }
+      await esploader.writeFlash({
+        fileArray: flashData,
+        flashSize: 'keep',
+        flashMode: 'keep',
+        flashFreq: 'keep',
+        eraseAll: true,
+        compress: true,
+        reportProgress: (idx, written, total) => {
+          const pct = 45 + Math.round((written / total) * 45);
+          updateProgress(pct);
+          document.getElementById('progressFill').style.width = pct + '%';
+        }
+      });
 
       updateStep(3, 'done'); updateStep(4, 'done'); updateProgress(92);
 
       updateStep(5, 'active');
       addLog('info', '  Verifying…');
-      await new Promise(r => setTimeout(r, 600));
+      try {
+        // After a successful write the ESP32 reboots and sends boot messages
+        // over serial. esptool-js may misread them as a bad packet — this is
+        // harmless noise, not a real failure, so we swallow it here.
+        await esploader.after();
+      } catch (rebootErr) {
+        addLog('info', `  (Post-flash reboot noise ignored: ${rebootErr.message})`);
+      }
       updateStep(5, 'done'); updateProgress(100);
 
       addLog('ok', '✓ Flash successful! ESP32 is rebooting…');
