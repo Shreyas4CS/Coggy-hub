@@ -1357,7 +1357,7 @@ window.doUpload = async () => {
 
       updateStep(2, 'active');
       addLog('info', '  Erasing flash…');
-      await esploader.erase_flash();
+      // erase handled by write_flash
       updateStep(2, 'done'); updateProgress(45);
 
       updateStep(3, 'active'); updateStep(4, 'active');
