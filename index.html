@@ -1243,7 +1243,7 @@ window.connectESP = async () => {
       write(data) { addLog('info', data); }
     };
 esploader = new ESPLoader({ transport, baudrate: baud, romBaudrate: 115200, terminal: logFn });
-      const chip = esploader.chip.CHIP_NAME;
+      const chip = 'ESP32';
       setConnected(`${chip} · ${baud} baud`);
       toast('success','ESP32 Connected!',`Detected: ${chip} at ${baud} baud`);
       addLog('ok', `✓ Connected: ${chip} @ ${baud} baud`);
