@@ -1390,7 +1390,8 @@ window.doUpload = async () => {
       await new Promise(r => setTimeout(r, 600));
       updateStep(5, 'done'); updateProgress(100);
 
-      addLog('ok', '✓ Flash successful! ESP32 is rebooting…');
+      addLog('ok', '✓ Flash successful! Rebooting ESP32…');
+      await esploader.hardReset();
 
     } else {
       // ── DEMO MODE ──
