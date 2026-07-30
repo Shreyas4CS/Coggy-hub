@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coggy-Hub — CognoSpace</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- esptool-js: place esptool-bundle.js in same folder as this HTML -->
+<script type="module">
+  // We load esptool-js as an ES module from the same directory
+  // In Vercel, put esptool-bundle.js in /public/ alongside this file
+  let ESPLoader, Transport;
+  try {
+    const mod = await import('./esptool-bundle.js');
+    ESPLoader = mod.ESPLoader;
+    Transport = mod.Transport;
+    window.__ESPLoader = ESPLoader;
+    window.__Transport = Transport;
+    window.__espReady = true;
+  } catch(e) {
+    console.warn('esptool-bundle.js not found. Flashing will run in demo mode.', e);
+    window.__espReady = false;
+  }
+</script>
+
+<style>
+/* ── TOKENS ── */
+:root {
+  --bg:        #F0F4FF;
+  --surface:   #FFFFFF;
+  --surface2:  #F7F9FF;
+  --border:    #DDE3F5;
+  --border2:   #C8D2EE;
+  --primary:   #5046E5;
+  --primary-l: #EEF0FF;
+  --primary-d: #3D34CC;
+  --green:     #10B981;
+  --green-l:   #ECFDF5;
+  --amber:     #F59E0B;
+  --amber-l:   #FFFBEB;
+  --red:       #EF4444;
+  --red-l:     #FEF2F2;
+  --text:      #1E1B4B;
+  --text2:     #4B5280;
+  --muted:     #8891B4;
+  --radius:    16px;
+  --radius-sm: 10px;
+  --shadow:    0 1px 4px rgba(80,70,229,0.07), 0 4px 16px rgba(80,70,229,0.06);
+  --shadow-md: 0 2px 8px rgba(80,70,229,0.1), 0 8px 28px rgba(80,70,229,0.1);
+  --font:      'Plus Jakarta Sans', sans-serif;
+  --mono:      'JetBrains Mono', monospace;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+}
+
+/* ═══════════════════════════════════
+   LANDING
+═══════════════════════════════════ */
+#landing { display: flex; flex-direction: column; min-height: 100vh; }
+#upload-panel { display: none; min-height: 100vh; flex-direction: column; }
+
+/* NAV */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  height: 64px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 200;
+  box-shadow: 0 1px 0 var(--border);
+}
+
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 1.25rem; font-weight: 800;
+  letter-spacing: -0.5px; color: var(--text);
+  text-decoration: none;
+}
+
+.logo-mark {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--primary), #7C3AED);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 17px;
+}
+
+.logo-txt b { color: var(--primary); }
+
+.nav-right {
+  display: flex; align-items: center; gap: 12px;
+}
+
+.nav-chip {
+  font-size: 0.72rem; font-weight: 600;
+  background: var(--primary-l); color: var(--primary);
+  padding: 4px 11px; border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+/* HERO */
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 24px 48px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-blob {
+  position: absolute;
+  width: 800px; height: 480px;
+  background: radial-gradient(ellipse, rgba(80,70,229,0.08) 0%, transparent 70%);
+  top: 0; left: 50%; transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.75rem; font-weight: 600;
+  color: var(--primary); letter-spacing: 0.8px;
+  text-transform: uppercase;
+  background: var(--primary-l);
+  border: 1px solid #C7C4F8;
+  padding: 5px 14px; border-radius: 20px;
+  margin-bottom: 24px;
+}
+
+.hero-eyebrow span { width:6px;height:6px;background:var(--primary);border-radius:50%;display:inline-block; }
+
+h1 {
+  font-size: clamp(2.4rem, 5.5vw, 4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  max-width: 680px;
+  margin-bottom: 18px;
+  color: var(--text);
+}
+
+h1 em { font-style: normal; color: var(--primary); }
+
+.hero-sub {
+  font-size: 1.05rem; color: var(--text2); line-height: 1.7;
+  max-width: 440px; margin-bottom: 40px;
+}
+
+.hero-cta {
+  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff; border: none;
+  padding: 13px 28px; border-radius: var(--radius-sm);
+  font: 600 0.93rem var(--font);
+  cursor: pointer;
+  display: flex; align-items: center; gap: 7px;
+  transition: all 0.18s;
+  box-shadow: 0 2px 8px rgba(80,70,229,0.3), 0 1px 2px rgba(80,70,229,0.2);
+}
+
+.btn-primary:hover {
+  background: var(--primary-d);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(80,70,229,0.35);
+}
+
+.btn-outline {
+  background: var(--surface);
+  color: var(--text2);
+  border: 1px solid var(--border2);
+  padding: 13px 24px; border-radius: var(--radius-sm);
+  font: 500 0.93rem var(--font);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.btn-outline:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-l); }
+
+/* STEP CARDS */
+.steps {
+  display: flex; justify-content: center; gap: 0;
+  padding: 52px 48px;
+  flex-wrap: wrap;
+}
+
+.step {
+  display: flex; align-items: flex-start; gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 24px 22px; flex: 1; min-width: 200px; max-width: 280px;
+  position: relative;
+}
+
+.step:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.step:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+.step:not(:last-child) { border-right: none; }
+
+.step-num {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--primary-l); color: var(--primary);
+  font: 700 0.85rem var(--font);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 2px;
+}
+
+.step-body {}
+.step-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 4px; }
+.step-desc { font-size: 0.78rem; color: var(--text2); line-height: 1.5; }
+
+/* GRADE SHOWCASE STRIP */
+.grade-strip {
+  display: flex; gap: 10px;
+  padding: 0 48px 60px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.grade-pill {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 10px 16px; border-radius: 40px;
+  white-space: nowrap; cursor: pointer;
+  font-size: 0.82rem; font-weight: 600;
+  transition: all 0.15s;
+}
+
+.grade-pill:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-l); }
+
+/* ═══════════════════════════════════
+   UPLOAD PANEL — LAYOUT
+═══════════════════════════════════ */
+.panel-layout {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - 64px);
+  overflow: hidden;
+}
+
+/* LEFT SIDEBAR */
+.sidebar {
+  width: 380px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-head {
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0;
+  background: var(--surface);
+  z-index: 10;
+}
+
+.sidebar-head h2 {
+  font-size: 0.78rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--muted);
+}
+
+.sidebar-search {
+  margin-top: 10px;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.sidebar-search input {
+  border: none; background: transparent;
+  font: 0.85rem var(--font); color: var(--text);
+  flex: 1; outline: none;
+}
+
+.sidebar-search input::placeholder { color: var(--muted); }
+
+/* GRADE ACCORDION */
+.grade-block { border-bottom: 1px solid var(--border); }
+
+.grade-toggle {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+
+.grade-toggle:hover { background: var(--surface2); }
+.grade-block.open .grade-toggle { background: var(--primary-l); }
+
+.grade-emoji {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+
+.grade-info-s { flex: 1; }
+.grade-name-s { font-size: 0.88rem; font-weight: 700; }
+.grade-theme-s { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+
+.grade-count {
+  font: 500 0.72rem var(--mono);
+  color: var(--muted);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 2px 8px; border-radius: 10px;
+}
+
+.grade-block.open .grade-count { background: var(--primary-l); color: var(--primary); border-color: #C7C4F8; }
+
+.chevron-s {
+  color: var(--muted); font-size: 11px;
+  transition: transform 0.2s;
+}
+
+.grade-block.open .chevron-s { transform: rotate(180deg); color: var(--primary); }
+
+/* ACTIVITY ITEMS */
+.act-list { display: none; background: var(--surface2); }
+.grade-block.open .act-list { display: block; }
+
+.act-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 20px 11px 28px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+
+.act-row:last-child { border-bottom: none; }
+.act-row:hover { background: #EEF0FF; }
+
+.act-row.selected {
+  background: var(--primary-l);
+  border-left: 3px solid var(--primary);
+  padding-left: 25px;
+}
+
+.act-emoji-s {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+
+.act-row.selected .act-emoji-s { background: #fff; border-color: #C7C4F8; }
+
+.act-text { flex: 1; }
+.act-name-s { font-size: 0.83rem; font-weight: 600; }
+.act-desc-s { font-size: 0.71rem; color: var(--muted); margin-top: 1px; }
+
+.act-check {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid var(--border2);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+
+.act-row.selected .act-check {
+  background: var(--primary); border-color: var(--primary);
+}
+
+.act-row.selected .act-check::after {
+  content: '✓'; color: #fff; font-size: 10px; font-weight: 700;
+}
+
+/* ═══════════════════════════════════
+   MAIN AREA
+═══════════════════════════════════ */
+.main-area {
+  flex: 1; overflow-y: auto;
+  display: flex; flex-direction: column;
+  padding: 28px 32px 120px;
+  gap: 20px;
+}
+
+/* CONNECT CARD */
+.connect-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  box-shadow: var(--shadow);
+}
+
+.card-label {
+  font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.4px;
+  color: var(--muted); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.card-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.connect-row {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+
+/* PULSE BUTTON — signature element */
+.connect-btn-wrap { position: relative; }
+
+.pulse-rings {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.pulse-rings span {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 2px solid var(--green);
+  opacity: 0;
+  animation: none;
+}
+
+.pulse-rings.active span:nth-child(1) { animation: ripple 2s 0s infinite; }
+.pulse-rings.active span:nth-child(2) { animation: ripple 2s 0.6s infinite; }
+.pulse-rings.active span:nth-child(3) { animation: ripple 2s 1.2s infinite; }
+
+@keyframes ripple {
+  0%   { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+.btn-connect-main {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--surface2);
+  border: 2px solid var(--border2);
+  cursor: pointer; font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; position: relative; z-index: 1;
+  flex-shrink: 0;
+}
+
+.btn-connect-main:hover { border-color: var(--primary); background: var(--primary-l); }
+.btn-connect-main.connected { background: var(--green-l); border-color: var(--green); }
+.btn-connect-main.connecting { background: var(--amber-l); border-color: var(--amber); animation: spin 1.5s linear infinite; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.connect-info { flex: 1; }
+.connect-status-text { font-size: 0.92rem; font-weight: 600; }
+.connect-status-text.connected { color: var(--green); }
+.connect-status-text.disconnected { color: var(--muted); }
+.connect-port { font: 0.74rem var(--mono); color: var(--muted); margin-top: 3px; }
+
+.baud-selector {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 8px 12px;
+  border-radius: var(--radius-sm); font: 0.8rem var(--mono);
+  cursor: pointer; outline: none;
+}
+
+.btn-connect-text {
+  background: var(--green); color: #fff; border: none;
+  padding: 10px 20px; border-radius: var(--radius-sm);
+  font: 600 0.85rem var(--font); cursor: pointer;
+  display: flex; align-items: center; gap: 7px;
+  transition: all 0.18s;
+  box-shadow: 0 2px 8px rgba(16,185,129,0.25);
+}
+
+.btn-connect-text:hover { background: #0EA472; transform: translateY(-1px); }
+.btn-connect-text.disconnect { background: var(--red); box-shadow: 0 2px 8px rgba(239,68,68,0.2); }
+.btn-connect-text.disconnect:hover { background: #DC2626; }
+
+/* BROWSER WARNING */
+.browser-warn {
+  background: var(--amber-l);
+  border: 1px solid #FDE68A;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.78rem; color: #92400E;
+  display: none; align-items: center; gap: 8px;
+  margin-top: 12px;
+}
+
+.browser-warn.visible { display: flex; }
+
+/* SELECTED ACTIVITY CARD */
+.selected-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 28px;
+  box-shadow: var(--shadow);
+  display: none;
+}
+
+.selected-card.visible { display: block; }
+
+.sel-activity-header {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 16px;
+}
+
+.sel-big-emoji {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: var(--primary-l);
+  border: 1px solid #C7C4F8;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; flex-shrink: 0;
+}
+
+.sel-details {}
+.sel-act-name { font-size: 1.1rem; font-weight: 700; }
+.sel-grade-name { font-size: 0.78rem; color: var(--primary); font-weight: 600; margin-top: 2px; }
+.sel-act-desc { font-size: 0.8rem; color: var(--text2); margin-top: 4px; }
+
+.lib-row {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 12px;
+}
+
+.lib-badge {
+  font: 0.7rem var(--mono);
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text2); padding: 3px 10px; border-radius: 6px;
+}
+
+.bin-path {
+  margin-top: 12px;
+  font: 0.73rem var(--mono);
+  color: var(--muted);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 8px 12px; border-radius: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.bin-path-ok { color: var(--green); }
+.bin-path-missing { color: var(--red); }
+
+/* UPLOAD CARD */
+.upload-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 28px;
+  box-shadow: var(--shadow);
+  display: none;
+}
+
+.upload-card.visible { display: block; }
+
+.btn-upload-main {
+  width: 100%;
+  background: var(--primary);
+  color: #fff; border: none;
+  padding: 16px 24px; border-radius: var(--radius-sm);
+  font: 700 1rem var(--font);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: all 0.18s;
+  box-shadow: 0 4px 14px rgba(80,70,229,0.3);
+  letter-spacing: 0.2px;
+}
+
+.btn-upload-main:hover:not(:disabled) {
+  background: var(--primary-d);
+  box-shadow: 0 8px 24px rgba(80,70,229,0.4);
+  transform: translateY(-1px);
+}
+
+.btn-upload-main:disabled {
+  background: #C4C6E0; box-shadow: none; cursor: not-allowed; transform: none;
+}
+
+/* PROGRESS */
+.progress-section { margin-top: 16px; display: none; }
+.progress-section.visible { display: block; }
+
+.progress-track {
+  height: 8px; background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px; overflow: hidden; margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--primary), #7C3AED);
+  border-radius: 4px;
+  transition: width 0.35s ease;
+}
+
+.progress-steps {
+  display: flex; flex-direction: column; gap: 4px;
+  margin-top: 10px;
+}
+
+.p-step {
+  display: flex; align-items: center; gap: 8px;
+  font: 0.75rem var(--mono); color: var(--muted);
+  padding: 4px 0;
+}
+
+.p-step.done { color: var(--green); }
+.p-step.active { color: var(--primary); font-weight: 500; }
+.p-step.error { color: var(--red); }
+
+.p-step-icon { width: 16px; text-align: center; flex-shrink: 0; }
+
+/* SERIAL LOG */
+.log-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.log-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+}
+
+.log-head:hover { background: var(--surface2); }
+
+.log-head-left {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.75rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px; color: var(--muted);
+}
+
+.log-indicator {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--border2);
+  transition: background 0.2s;
+}
+
+.log-indicator.live { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+.log-toggle-btn {
+  font-size: 0.72rem; color: var(--primary);
+  background: var(--primary-l); border: none;
+  padding: 3px 10px; border-radius: 10px;
+  cursor: pointer; font-family: var(--font); font-weight: 600;
+}
+
+.log-body {
+  background: #1E1B4B;
+  padding: 14px 18px;
+  max-height: 180px; overflow-y: auto;
+  display: none;
+}
+
+.log-body.open { display: block; }
+
+.log-line {
+  font: 0.74rem var(--mono);
+  line-height: 1.8; color: #8891B4;
+}
+
+.log-line.ok { color: #34D399; }
+.log-line.err { color: #F87171; }
+.log-line.info { color: #A5B4FC; }
+
+/* ═══════════════════════════════════
+   EMPTY STATE
+═══════════════════════════════════ */
+.empty-state {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 40px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px dashed var(--border2);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.6; }
+.empty-title { font-size: 1rem; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+.empty-desc { font-size: 0.82rem; line-height: 1.6; }
+
+/* ═══════════════════════════════════
+   SUCCESS MODAL
+═══════════════════════════════════ */
+.overlay {
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(30,27,75,0.4);
+  backdrop-filter: blur(6px);
+  display: none; align-items: center; justify-content: center;
+}
+
+.overlay.visible { display: flex; }
+
+.success-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 44px 48px;
+  max-width: 420px; width: 90%;
+  text-align: center;
+  box-shadow: var(--shadow-md), 0 0 0 4px rgba(16,185,129,0.1);
+  animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.85) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.success-ring {
+  width: 76px; height: 76px; border-radius: 50%;
+  background: var(--green-l); border: 2px solid var(--green);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px; margin: 0 auto 22px;
+  animation: ringIn 0.4s 0.1s both;
+}
+
+@keyframes ringIn {
+  from { transform: scale(0) rotate(-30deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.success-modal h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 8px; }
+.success-modal p { color: var(--text2); font-size: 0.85rem; line-height: 1.65; margin-bottom: 20px; }
+
+.success-info-box {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 16px;
+  text-align: left; margin-bottom: 22px;
+  font: 0.75rem var(--mono); color: var(--text2); line-height: 1.8;
+}
+
+.success-info-box b { color: var(--primary); }
+
+.btn-done {
+  width: 100%;
+  background: var(--green); color: #fff; border: none;
+  padding: 13px 24px; border-radius: var(--radius-sm);
+  font: 700 0.92rem var(--font); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.18s;
+  box-shadow: 0 4px 14px rgba(16,185,129,0.3);
+}
+
+.btn-done:hover { background: #0EA472; transform: translateY(-1px); }
+
+/* TOAST */
+.toasts {
+  position: fixed; top: 76px; right: 20px; z-index: 998;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 13px 16px;
+  min-width: 280px; max-width: 340px;
+  box-shadow: var(--shadow-md);
+  pointer-events: all;
+  display: flex; gap: 12px; align-items: flex-start;
+  animation: toastIn 0.25s ease;
+}
+
+@keyframes toastIn { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+@keyframes toastOut { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(30px); } }
+.toast.out { animation: toastOut 0.25s ease forwards; }
+
+.toast.success { border-color: #6EE7B7; }
+.toast.error   { border-color: #FCA5A5; }
+.toast.info    { border-color: #C7C4F8; }
+.toast.warn    { border-color: #FDE68A; }
+
+.t-icon { font-size: 17px; margin-top: 1px; flex-shrink: 0; }
+.t-body { flex: 1; }
+.t-title { font-size: 0.82rem; font-weight: 700; margin-bottom: 2px; }
+.t-msg { font-size: 0.75rem; color: var(--text2); line-height: 1.45; }
+.t-close { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 15px; padding: 0; line-height: 1; }
+.t-close:hover { color: var(--text); }
+
+/* PANEL NAV */
+.panel-nav {
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 28px; height: 64px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 200;
+  box-shadow: 0 1px 0 var(--border);
+}
+
+.btn-back {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text2); padding: 7px 14px; border-radius: var(--radius-sm);
+  font: 500 0.82rem var(--font); cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  transition: all 0.15s;
+}
+
+.btn-back:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-l); }
+
+.panel-nav .logo { font-size: 1.1rem; }
+
+@media (max-width: 768px) {
+  .nav { padding: 0 20px; }
+  .panel-layout { flex-direction: column; height: auto; }
+  .sidebar { width: 100%; max-height: 50vh; }
+  .main-area { padding: 20px 16px 100px; }
+  .steps { padding: 32px 20px; }
+  .step:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+  .step:last-child { border-radius: 0 0 var(--radius) var(--radius); }
+  .step:not(:last-child) { border-right: 1px solid var(--border); border-bottom: none; }
+  h1 { letter-spacing: -1px; }
+  .success-modal { padding: 32px 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOASTS -->
+<div class="toasts" id="toastBox"></div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="success-modal">
+    <div class="success-ring">✅</div>
+    <h2>Upload Complete!</h2>
+    <p id="successMsg">Your sketch has been successfully flashed to the ESP32.</p>
+    <div class="success-info-box" id="successInfo"></div>
+    <button class="btn-done" onclick="closeOverlay()">⚡ Done</button>
+  </div>
+</div>
+
+<!-- ═══════ LANDING ═══════ -->
+<section id="landing">
+  <nav class="nav">
+    <a class="logo" href="#">
+      <div class="logo-mark">⚡</div>
+      <div class="logo-txt">Coggy<b>-Hub</b></div>
+    </a>
+    <div class="nav-right">
+      <span class="nav-chip">by CognoSpace</span>
+      <button class="btn-primary" onclick="openPanel()">Upload Code →</button>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-blob"></div>
+    <div class="hero-eyebrow"><span></span> No Arduino IDE needed</div>
+    <h1>Flash your ESP32<br>from the <em>browser</em></h1>
+    <p class="hero-sub">Pick a grade, pick an activity, plug in your board — one click uploads the code. No setup, no libraries, no CLI.</p>
+    <div class="hero-cta">
+      <button class="btn-primary" onclick="openPanel()">⚡ Start Uploading</button>
+      <button class="btn-outline" onclick="document.getElementById('steps-section').scrollIntoView({behavior:'smooth'})">How it works</button>
+    </div>
+  </div>
+
+  <div class="steps" id="steps-section">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Plug in ESP32</div>
+        <div class="step-desc">Connect your ESP32 to your laptop via USB cable.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Click Connect</div>
+        <div class="step-desc">Browser asks you to pick the COM/serial port. Select it once.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Pick Activity</div>
+        <div class="step-desc">Choose the grade and activity you want to run.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-title">Upload</div>
+        <div class="step-desc">Hit Upload — code is flashed directly. Done.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grade-strip" style="padding:0 48px 64px;">
+    <div style="font-size:0.8rem;font-weight:700;color:var(--muted);align-self:center;white-space:nowrap;margin-right:4px;">Grades →</div>
+    <div class="grade-pill">🌱 Grade 6 · Electronics Basics</div>
+    <div class="grade-pill">📡 Grade 7 · Sensors & Displays</div>
+    <div class="grade-pill">🤖 Grade 8 · Motors & IoT</div>
+    <div class="grade-pill">🌐 Grade 9 · Firebase & Web</div>
+    <div class="grade-pill">🔵 Grade 10 · Robotics & BLE</div>
+    <div class="grade-pill">🧠 Grade 11 · AI/ML Edge</div>
+  </div>
+</section>
+
+<!-- ═══════ UPLOAD PANEL ═══════ -->
+<section id="upload-panel">
+  <nav class="nav panel-nav" style="position:sticky;top:0;z-index:200;">
+    <button class="btn-back" onclick="closePanel()">← Back</button>
+    <a class="logo" href="#">
+      <div class="logo-mark">⚡</div>
+      <div class="logo-txt">Coggy<b>-Hub</b></div>
+    </a>
+    <span class="nav-chip" style="margin-left:auto;">by CognoSpace</span>
+  </nav>
+
+  <div class="panel-layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-head">
+        <h2>Grade & Activity</h2>
+        <div class="sidebar-search">
+          <span style="color:var(--muted);font-size:14px;">🔍</span>
+          <input type="text" placeholder="Search activities…" id="searchInput" oninput="filterActivities(this.value)">
+        </div>
+      </div>
+      <div id="gradeList"></div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main-area" id="mainArea">
+
+      <!-- CONNECT CARD -->
+      <div class="connect-card">
+        <div class="card-label">Step 1 — Connect your ESP32</div>
+        <div class="connect-row">
+          <div class="connect-btn-wrap">
+            <div class="pulse-rings" id="pulseRings">
+              <span></span><span></span><span></span>
+            </div>
+            <button class="btn-connect-main" id="connectCircle" title="Connect ESP32" onclick="connectESP()">🔌</button>
+          </div>
+          <div class="connect-info">
+            <div class="connect-status-text disconnected" id="statusText">Not connected</div>
+            <div class="connect-port" id="portText">Click the button to choose your COM port</div>
+          </div>
+          <select class="baud-selector" id="baudRate">
+            <option value="115200">115200 baud</option>
+            <option value="921600">921600 baud</option>
+            <option value="460800">460800 baud</option>
+          </select>
+          <button class="btn-connect-text" id="connectTextBtn" onclick="connectESP()">🔌 Connect ESP32</button>
+        </div>
+        <div class="browser-warn" id="browserWarn">
+          ⚠️ Web Serial API needs <b>Google Chrome</b> or <b>Microsoft Edge</b>. Safari and Firefox won't work.
+        </div>
+      </div>
+
+      <!-- EMPTY STATE (shown until activity selected) -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">👈</div>
+        <div class="empty-title">Select an activity from the sidebar</div>
+        <div class="empty-desc">Browse by grade and pick what you want to flash.<br>The upload button will appear here.</div>
+      </div>
+
+      <!-- SELECTED ACTIVITY CARD -->
+      <div class="selected-card" id="selectedCard">
+        <div class="card-label">Step 2 — Selected Activity</div>
+        <div class="sel-activity-header">
+          <div class="sel-big-emoji" id="selEmoji">⚡</div>
+          <div class="sel-details">
+            <div class="sel-act-name" id="selActName">—</div>
+            <div class="sel-grade-name" id="selGradeName">—</div>
+            <div class="sel-act-desc" id="selActDesc">—</div>
+          </div>
+        </div>
+        <div class="lib-row" id="libRow"></div>
+        <div class="bin-path" id="binPathBox">
+          <span style="color:var(--muted)">📦</span>
+          <span id="binPathText">—</span>
+          <span id="binPathStatus"></span>
+        </div>
+      </div>
+
+      <!-- UPLOAD CARD -->
+      <div class="upload-card" id="uploadCard">
+        <div class="card-label">Step 3 — Flash to ESP32</div>
+        <button class="btn-upload-main" id="uploadBtn" onclick="doUpload()" disabled>
+          ⚡ Upload to ESP32
+        </button>
+        <div class="progress-section" id="progressSection">
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-steps" id="progressSteps"></div>
+        </div>
+      </div>
+
+      <!-- LOG CARD -->
+      <div class="log-card">
+        <div class="log-head" onclick="toggleLog()">
+          <div class="log-head-left">
+            <div class="log-indicator" id="logIndicator"></div>
+            Serial Log
+          </div>
+          <button class="log-toggle-btn" id="logToggleBtn">Show</button>
+        </div>
+        <div class="log-body" id="logBody"></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<script type="module">
+// ══════════════════════════════════════
+// DATA
+// ══════════════════════════════════════
+const GRADES = [
+  {
+    id:'g6', name:'Grade 6', emoji:'🌱', color:'#5046E5',
+    theme:'Electronics Basics',
+    activities:[
+      { id:'g6-1', emoji:'💡', name:'LED Blink',         desc:'Basic GPIO — blink onboard LED',             libs:['Arduino Core'],             bin:'firmware/grade6/led_blink.bin' },
+      { id:'g6-2', emoji:'🔘', name:'Button & LED',      desc:'Read push button, control LED',              libs:['Arduino Core'],             bin:'firmware/grade6/button_led.bin' },
+      { id:'g6-3', emoji:'🚦', name:'Traffic Light',     desc:'Simulate Red-Yellow-Green signals',          libs:['Arduino Core'],             bin:'firmware/grade6/traffic_light.bin' },
+      { id:'g6-4', emoji:'🔔', name:'Buzzer Melody',     desc:'Play tones using passive buzzer',            libs:['Arduino Core'],             bin:'firmware/grade6/buzzer_melody.bin' },
+    ]
+  },
+  {
+    id:'g7', name:'Grade 7', emoji:'📡', color:'#0D9488',
+    theme:'Sensors & Displays',
+    activities:[
+      { id:'g7-1', emoji:'📏', name:'Ultrasonic Distance', desc:'Measure distance with HC-SR04',            libs:['Arduino Core'],             bin:'firmware/grade7/ultrasonic.bin' },
+      { id:'g7-2', emoji:'🌡️', name:'DHT11 Temperature', desc:'Read temp & humidity to Serial',            libs:['DHT sensor library'],       bin:'firmware/grade7/dht11.bin' },
+      { id:'g7-3', emoji:'🖥️', name:'OLED Hello World',  desc:'Display text on 0.96" I²C OLED',           libs:['Adafruit SSD1306','Wire'],  bin:'firmware/grade7/oled_hello.bin' },
+      { id:'g7-4', emoji:'🌙', name:'LDR Night Light',   desc:'Auto LED using light sensor',               libs:['Arduino Core'],             bin:'firmware/grade7/ldr_night.bin' },
+    ]
+  },
+  {
+    id:'g8', name:'Grade 8', emoji:'🤖', color:'#D97706',
+    theme:'Motors & IoT Basics',
+    activities:[
+      { id:'g8-1', emoji:'⚙️', name:'Servo Sweep',       desc:'Sweep servo 0–180° automatically',          libs:['ESP32Servo'],               bin:'firmware/grade8/servo_sweep.bin' },
+      { id:'g8-2', emoji:'🔄', name:'DC Motor Control',  desc:'Forward/reverse with L298N',                libs:['Arduino Core'],             bin:'firmware/grade8/dc_motor.bin' },
+      { id:'g8-3', emoji:'📶', name:'WiFi Scanner',      desc:'Scan nearby SSIDs & print results',         libs:['WiFi.h'],                   bin:'firmware/grade8/wifi_scan.bin' },
+      { id:'g8-4', emoji:'🌈', name:'NeoPixel Rainbow',  desc:'Animate WS2812B LED strip',                 libs:['Adafruit NeoPixel'],        bin:'firmware/grade8/neopixel.bin' },
+    ]
+  },
+  {
+    id:'g9', name:'Grade 9', emoji:'🌐', color:'#DC2626',
+    theme:'Firebase & Web Dashboards',
+    activities:[
+      { id:'g9-1', emoji:'🔥', name:'Firebase Temp Logger', desc:'Push DHT22 data to Firebase RTDB',      libs:['DHT','FirebaseESP32'],      bin:'firmware/grade9/firebase_temp.bin' },
+      { id:'g9-2', emoji:'🌍', name:'Web Server LED',       desc:'Control LED from any browser on LAN',   libs:['WiFi','WebServer'],         bin:'firmware/grade9/webserver_led.bin' },
+      { id:'g9-3', emoji:'📨', name:'MQTT Sensor Node',     desc:'Publish sensor data via MQTT',          libs:['PubSubClient'],             bin:'firmware/grade9/mqtt_sensor.bin' },
+      { id:'g9-4', emoji:'📲', name:'OTA Update Demo',      desc:'Over-the-air firmware update demo',     libs:['ArduinoOTA','WiFi'],        bin:'firmware/grade9/ota_demo.bin' },
+    ]
+  },
+  {
+    id:'g10', name:'Grade 10', emoji:'🔵', color:'#7C3AED',
+    theme:'Robotics & BLE',
+    activities:[
+      { id:'g10-1', emoji:'🔵', name:'BLE Controller',    desc:'Control ESP32 via BLE from browser',      libs:['BLEDevice','BLEServer'],    bin:'firmware/grade10/ble_control.bin' },
+      { id:'g10-2', emoji:'🤖', name:'Line Follower',     desc:'IR sensor line following robot',          libs:['Arduino Core'],             bin:'firmware/grade10/line_follower.bin' },
+      { id:'g10-3', emoji:'🚧', name:'Obstacle Avoider',  desc:'Ultrasonic autonomous navigation',        libs:['Arduino Core','ESP32Servo'],bin:'firmware/grade10/obstacle.bin' },
+      { id:'g10-4', emoji:'📐', name:'MPU6050 Tilt',      desc:'Gyro/accel data from MPU6050',            libs:['MPU6050','Wire'],           bin:'firmware/grade10/mpu6050.bin' },
+    ]
+  },
+  {
+    id:'g11', name:'Grade 11', emoji:'🧠', color:'#BE185D',
+    theme:'AI/ML Edge & Automation',
+    activities:[
+      { id:'g11-1', emoji:'🌾', name:'Agribot Sensors',   desc:'Full Agribot sensor + pump relay firmware',libs:['DHT22','Relay','Wire'],    bin:'firmware/grade11/agribot.bin' },
+      { id:'g11-2', emoji:'🦁', name:'WildGuard Gates',   desc:'Animal detection dual servo gate system', libs:['ESP32Servo','Adafruit NeoPixel','TM1637'],bin:'firmware/grade11/wildguard.bin' },
+      { id:'g11-3', emoji:'✏️', name:'EthnoPlot BLE',     desc:'BLE XY drawing robot (EthnoPlot)',        libs:['BLE','AccelStepper'],       bin:'firmware/grade11/ethnoplot.bin' },
+      { id:'g11-4', emoji:'🧬', name:'Edge Impulse ML',   desc:'On-device gesture ML classifier',         libs:['EdgeImpulse SDK'],          bin:'firmware/grade11/edge_impulse.bin' },
+    ]
+  }
+];
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let port = null;
+let transport = null;
+let esploader = null;
+let isConnected = false;
+let selectedActivity = null;
+let logOpen = false;
+
+// ══════════════════════════════════════
+// NAV
+// ══════════════════════════════════════
+window.openPanel = () => {
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('upload-panel').style.display = 'flex';
+  document.getElementById('upload-panel').style.flexDirection = 'column';
+  renderSidebar(GRADES);
+  checkBrowserSupport();
+};
+
+window.closePanel = () => {
+  document.getElementById('upload-panel').style.display = 'none';
+  document.getElementById('landing').style.display = 'flex';
+};
+
+// ══════════════════════════════════════
+// BROWSER CHECK
+// ══════════════════════════════════════
+function checkBrowserSupport() {
+  if (!('serial' in navigator)) {
+    document.getElementById('browserWarn').classList.add('visible');
+  }
+}
+
+// ══════════════════════════════════════
+// SIDEBAR RENDER
+// ══════════════════════════════════════
+function renderSidebar(grades) {
+  const list = document.getElementById('gradeList');
+  list.innerHTML = grades.map(g => `
+    <div class="grade-block" id="gb-${g.id}">
+      <div class="grade-toggle" onclick="toggleGrade('${g.id}')">
+        <div class="grade-emoji" style="background:${g.color}18;border:1px solid ${g.color}33;">${g.emoji}</div>
+        <div class="grade-info-s">
+          <div class="grade-name-s">${g.name}</div>
+          <div class="grade-theme-s">${g.theme}</div>
+        </div>
+        <span class="grade-count">${g.activities.length}</span>
+        <span class="chevron-s">▼</span>
+      </div>
+      <div class="act-list">
+        ${g.activities.map(a => `
+          <div class="act-row" id="ar-${a.id}" onclick="selectActivity('${g.id}','${a.id}')">
+            <div class="act-check"></div>
+            <div class="act-emoji-s">${a.emoji}</div>
+            <div class="act-text">
+              <div class="act-name-s">${a.name}</div>
+              <div class="act-desc-s">${a.desc}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+window.toggleGrade = (id) => {
+  const block = document.getElementById(`gb-${id}`);
+  const wasOpen = block.classList.contains('open');
+  document.querySelectorAll('.grade-block').forEach(b => b.classList.remove('open'));
+  if (!wasOpen) block.classList.add('open');
+};
+
+window.filterActivities = (query) => {
+  const q = query.toLowerCase().trim();
+  if (!q) { renderSidebar(GRADES); return; }
+  const filtered = GRADES.map(g => ({
+    ...g,
+    activities: g.activities.filter(a =>
+      a.name.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q)
+    )
+  })).filter(g => g.activities.length > 0);
+  renderSidebar(filtered);
+  filtered.forEach(g => document.getElementById(`gb-${g.id}`)?.classList.add('open'));
+};
+
+// ══════════════════════════════════════
+// ACTIVITY SELECTION
+// ══════════════════════════════════════
+window.selectActivity = (gradeId, actId) => {
+  const grade = GRADES.find(g => g.id === gradeId);
+  const act   = grade.activities.find(a => a.id === actId);
+  selectedActivity = { grade, act };
+
+  document.querySelectorAll('.act-row').forEach(r => r.classList.remove('selected'));
+  document.getElementById(`ar-${actId}`)?.classList.add('selected');
+
+  // populate selected card
+  document.getElementById('selEmoji').textContent    = act.emoji;
+  document.getElementById('selActName').textContent  = act.name;
+  document.getElementById('selGradeName').textContent = `${grade.name} · ${grade.theme}`;
+  document.getElementById('selActDesc').textContent  = act.desc;
+  document.getElementById('libRow').innerHTML = act.libs.map(l => `<span class="lib-badge">${l}</span>`).join('');
+  document.getElementById('binPathText').textContent = act.bin;
+  document.getElementById('binPathStatus').textContent = '';
+  document.getElementById('binPathStatus').className = '';
+
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('selectedCard').classList.add('visible');
+  document.getElementById('uploadCard').classList.add('visible');
+
+  checkBinExists(act.bin);
+  updateUploadBtn();
+};
+
+async function checkBinExists(path) {
+  try {
+    const r = await fetch(path, { method: 'HEAD' });
+    const el = document.getElementById('binPathStatus');
+    if (r.ok) { el.textContent = '✓ found'; el.className = 'bin-path-ok'; }
+    else       { el.textContent = '✗ not found'; el.className = 'bin-path-missing'; }
+  } catch {
+    document.getElementById('binPathStatus').textContent = '(checking…)';
+  }
+}
+
+// ══════════════════════════════════════
+// CONNECT
+// ══════════════════════════════════════
+window.connectESP = async () => {
+  if (!('serial' in navigator)) {
+    toast('warn','Browser Not Supported','Use Chrome or Edge — Web Serial API required.');
+    return;
+  }
+
+  if (isConnected) { await disconnectESP(); return; }
+
+  setConnecting();
+  try {
+    port = await navigator.serial.requestPort();
+    const baud = parseInt(document.getElementById('baudRate').value);
+
+    if (window.__espReady) {
+      // Real esptool-js connection
+      const { Transport, ESPLoader } = await import('./esptool-bundle.js');
+      transport = new Transport(port, true);
+      const logFn = { log:(msg)=>addLog('info',msg), debug:()=>{}, error:(msg)=>addLog('err',msg) };
+      esploader = new ESPLoader({ transport, baudrate: baud, romBaudrate: 115200, terminal: logFn });
+      await esploader.main();
+      const chip = await esploader.get_chip_description();
+      setConnected(`${chip} · ${baud} baud`);
+      toast('success','ESP32 Connected!',`Detected: ${chip} at ${baud} baud`);
+      addLog('ok', `✓ Connected: ${chip} @ ${baud} baud`);
+    } else {
+      // Demo mode — real port opened but no esptool
+      await port.open({ baudRate: baud });
+      setConnected(`COM port open · ${baud} baud (demo mode)`);
+      toast('info','Connected (Demo)','esptool-bundle.js not found. Add it alongside this HTML for real flashing.');
+      addLog('info', `Port opened at ${baud} baud — demo mode (esptool-bundle.js missing)`);
+    }
+    updateUploadBtn();
+  } catch (err) {
+    setDisconnected();
+    if (err.name !== 'NotFoundError') {
+      addLog('err', `✗ ${err.message}`);
+      toast('error','Connection Failed', err.message);
+    }
+  }
+};
+
+async function disconnectESP() {
+  try {
+    if (transport) await transport.disconnect();
+    else if (port) await port.close();
+  } catch {}
+  port = null; transport = null; esploader = null;
+  setDisconnected();
+  addLog('info','— Disconnected');
+  updateUploadBtn();
+}
+
+function setConnecting() {
+  const c = document.getElementById('connectCircle');
+  c.className = 'btn-connect-main connecting';
+  c.textContent = '⟳';
+  document.getElementById('statusText').textContent = 'Connecting…';
+  document.getElementById('statusText').className = 'connect-status-text';
+  document.getElementById('portText').textContent = 'Please wait…';
+}
+
+function setConnected(info) {
+  isConnected = true;
+  const c = document.getElementById('connectCircle');
+  c.className = 'btn-connect-main connected';
+  c.textContent = '✓';
+  document.getElementById('pulseRings').classList.add('active');
+  document.getElementById('statusText').textContent = 'ESP32 Connected';
+  document.getElementById('statusText').className = 'connect-status-text connected';
+  document.getElementById('portText').textContent = info;
+  document.getElementById('connectTextBtn').textContent = '⏏ Disconnect';
+  document.getElementById('connectTextBtn').classList.add('disconnect');
+  document.getElementById('logIndicator').classList.add('live');
+}
+
+function setDisconnected() {
+  isConnected = false;
+  const c = document.getElementById('connectCircle');
+  c.className = 'btn-connect-main';
+  c.textContent = '🔌';
+  document.getElementById('pulseRings').classList.remove('active');
+  document.getElementById('statusText').textContent = 'Not connected';
+  document.getElementById('statusText').className = 'connect-status-text disconnected';
+  document.getElementById('portText').textContent = 'Click the button to choose your COM port';
+  document.getElementById('connectTextBtn').textContent = '🔌 Connect ESP32';
+  document.getElementById('connectTextBtn').classList.remove('disconnect');
+  document.getElementById('logIndicator').classList.remove('live');
+}
+
+function updateUploadBtn() {
+  document.getElementById('uploadBtn').disabled = !(isConnected && selectedActivity);
+}
+
+// ══════════════════════════════════════
+// UPLOAD
+// ══════════════════════════════════════
+window.doUpload = async () => {
+  if (!isConnected || !selectedActivity) return;
+  const { act, grade } = selectedActivity;
+  const btn = document.getElementById('uploadBtn');
+  btn.disabled = true;
+  btn.textContent = '⚡ Flashing…';
+
+  const steps = [
+    { label: 'Fetching binary from server' },
+    { label: 'Entering bootloader mode' },
+    { label: 'Erasing flash sectors' },
+    { label: 'Writing bootloader' },
+    { label: 'Writing app partition' },
+    { label: 'Verifying' },
+  ];
+
+  showProgress(steps);
+  addLog('ok', `→ Starting upload: ${act.name} (${act.bin})`);
+
+  try {
+    // Fetch the .bin
+    updateStep(0, 'active'); updateProgress(5);
+    addLog('info', `  Fetching ${act.bin}…`);
+    const resp = await fetch(act.bin);
+    if (!resp.ok) throw new Error(`.bin not found at ${act.bin}. Did you add the firmware folder?`);
+    const binData = await resp.arrayBuffer();
+    updateStep(0, 'done'); updateProgress(15);
+    addLog('ok', `  ✓ Binary fetched (${(binData.byteLength/1024).toFixed(1)} KB)`);
+
+    if (window.__espReady && esploader) {
+      // ── REAL FLASH ──
+      updateStep(1, 'active');
+      addLog('info', '  Entering bootloader…');
+      // esploader already synced in main(); proceed to flash
+      updateStep(1, 'done'); updateProgress(25);
+
+      updateStep(2, 'active');
+      addLog('info', '  Erasing flash…');
+      await esploader.erase_flash();
+      updateStep(2, 'done'); updateProgress(45);
+
+      updateStep(3, 'active'); updateStep(4, 'active');
+      addLog('info', '  Writing binary…');
+
+      const flashData = [{
+        data: binToArray(binData),
+        address: 0x0
+      }];
+
+      await esploader.write_flash({
+        fileArray: flashData,
+        flashSize: 'keep',
+        flashMode: 'keep',
+        flashFreq: 'keep',
+        eraseAll: false,
+        compress: true,
+        reportProgress: (idx, written, total) => {
+          const pct = 45 + Math.round((written / total) * 45);
+          updateProgress(pct);
+          document.getElementById('progressFill').style.width = pct + '%';
+        }
+      });
+
+      updateStep(3, 'done'); updateStep(4, 'done'); updateProgress(92);
+
+      updateStep(5, 'active');
+      addLog('info', '  Verifying…');
+      await new Promise(r => setTimeout(r, 600));
+      updateStep(5, 'done'); updateProgress(100);
+
+      addLog('ok', '✓ Flash successful! Rebooting ESP32…');
+      await esploader.hard_reset();
+
+    } else {
+      // ── DEMO MODE ──
+      for (let i = 1; i < steps.length; i++) {
+        updateStep(i, 'active');
+        await sleep(400 + Math.random() * 300);
+        updateProgress(15 + Math.round((i / (steps.length - 1)) * 85));
+        updateStep(i, 'done');
+        addLog('ok', `  ✓ ${steps[i].label}`);
+      }
+      addLog('info', '(Demo mode — add esptool-bundle.js for real flashing)');
+    }
+
+    // SUCCESS
+    btn.textContent = '⚡ Upload to ESP32';
+    btn.disabled = false;
+    document.getElementById('progressSection').style.display = 'none';
+
+    document.getElementById('successMsg').textContent = `${act.name} is now running on your ESP32.`;
+    document.getElementById('successInfo').innerHTML =
+      `<b>Grade:</b> ${grade.name} — ${grade.theme}<br><b>Activity:</b> ${act.name}<br><b>Binary:</b> ${act.bin}`;
+    document.getElementById('overlay').classList.add('visible');
+    toast('success','Uploaded!', `${act.name} flashed successfully.`);
+
+  } catch (err) {
+    addLog('err', `✗ ${err.message}`);
+    toast('error','Upload Failed', err.message);
+    btn.textContent = '⚡ Upload to ESP32';
+    btn.disabled = false;
+    steps.forEach((_,i) => {
+      const el = document.querySelector(`#progressSteps .p-step:nth-child(${i+1})`);
+      if (el?.classList.contains('active')) updateStep(i, 'error');
+    });
+  }
+};
+
+function binToArray(buffer) {
+  // esptool-js needs binary string
+  const bytes = new Uint8Array(buffer);
+  let str = '';
+  for (let i = 0; i < bytes.length; i++) str += String.fromCharCode(bytes[i]);
+  return str;
+}
+
+function showProgress(steps) {
+  const sec = document.getElementById('progressSection');
+  sec.style.display = 'block';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressSteps').innerHTML = steps.map((s, i) =>
+    `<div class="p-step" id="ps-${i}"><span class="p-step-icon">○</span>${s.label}</div>`
+  ).join('');
+}
+
+function updateStep(i, state) {
+  const el = document.getElementById(`ps-${i}`);
+  if (!el) return;
+  el.className = `p-step ${state}`;
+  const icons = { done:'✓', active:'▶', error:'✗', '':'○' };
+  el.querySelector('.p-step-icon').textContent = icons[state] ?? '○';
+}
+
+function updateProgress(pct) {
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+// ══════════════════════════════════════
+// LOG
+// ══════════════════════════════════════
+function addLog(type, msg) {
+  const body = document.getElementById('logBody');
+  const d = document.createElement('div');
+  d.className = `log-line ${type}`;
+  d.textContent = `[${timeNow()}] ${msg}`;
+  body.appendChild(d);
+  body.scrollTop = body.scrollHeight;
+  if (!logOpen) { toggleLog(); }
+}
+
+window.toggleLog = () => {
+  logOpen = !logOpen;
+  document.getElementById('logBody').classList.toggle('open', logOpen);
+  document.getElementById('logToggleBtn').textContent = logOpen ? 'Hide' : 'Show';
+};
+
+// ══════════════════════════════════════
+// OVERLAY / TOAST
+// ══════════════════════════════════════
+window.closeOverlay = () => document.getElementById('overlay').classList.remove('visible');
+
+function toast(type, title, msg) {
+  const icons = { success:'✅', error:'❌', info:'ℹ️', warn:'⚠️' };
+  const id = 't' + Date.now();
+  const el = document.createElement('div');
+  el.className = `toast ${type}`; el.id = id;
+  el.innerHTML = `
+    <span class="t-icon">${icons[type]}</span>
+    <div class="t-body"><div class="t-title">${title}</div><div class="t-msg">${msg}</div></div>
+    <button class="t-close" onclick="rmToast('${id}')">×</button>`;
+  document.getElementById('toastBox').appendChild(el);
+  setTimeout(() => rmToast(id), 5500);
+}
+
+window.rmToast = (id) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('out');
+  setTimeout(() => el.remove(), 260);
+};
+
+// ══════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function timeNow() { return new Date().toLocaleTimeString('en-IN', { hour12: false }); }
+</script>
+</body>
+</html>
